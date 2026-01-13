@@ -1,49 +1,236 @@
 // index.js
-const defaultAvatarUrl = 'https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0'
-
+// index.js - 地图页面
 Page({
   data: {
-    motto: 'Hello World',
-    userInfo: {
-      avatarUrl: defaultAvatarUrl,
-      nickName: '',
-    },
-    hasUserInfo: false,
-    canIUseGetUserProfile: wx.canIUse('getUserProfile'),
-    canIUseNicknameComp: wx.canIUse('input.type.nickname'),
+    // 视口尺寸
+    viewportWidth: 300,
+    viewportHeight: 300,
+    // 图片原始尺寸
+    imageWidth: 0,
+    imageHeight: 0,
+    // Marker数据
+    markers: [
+      { id: 'marker-1', x: 320, y: 580 },
+      { id: 'marker-2', x: 450, y: 320 }
+    ]
   },
-  bindViewTap() {
-    wx.navigateTo({
-      url: '../logs/logs'
-    })
-  },
-  onChooseAvatar(e) {
-    const { avatarUrl } = e.detail
-    const { nickName } = this.data.userInfo
+
+  onLoad() {
+    // 获取窗口信息（使用新的API）
+    const windowInfo = wx.getWindowInfo();
     this.setData({
-      "userInfo.avatarUrl": avatarUrl,
-      hasUserInfo: nickName && avatarUrl && avatarUrl !== defaultAvatarUrl,
-    })
+      viewportWidth: windowInfo.windowWidth,
+      viewportHeight: windowInfo.windowHeight
+    });
+    
+    // 初始化变量
+    this._currentX = 0;
+    this._currentY = 0;
+    this._currentScale = 1;
+    
+    // 加载地图图片
+    this.loadMapImage();
   },
-  onInputChange(e) {
-    const nickName = e.detail.value
-    const { avatarUrl } = this.data.userInfo
-    this.setData({
-      "userInfo.nickName": nickName,
-      hasUserInfo: nickName && avatarUrl && avatarUrl !== defaultAvatarUrl,
-    })
-  },
-  getUserProfile(e) {
-    // 推荐使用wx.getUserProfile获取用户信息，开发者每次通过该接口获取用户个人信息均需用户确认，开发者妥善保管用户快速填写的头像昵称，避免重复弹窗
-    wx.getUserProfile({
-      desc: '展示用户信息', // 声明获取用户个人信息后的用途，后续会展示在弹窗中，请谨慎填写
+
+  loadMapImage() {
+    // 使用wx.getImageInfo获取图片信息
+    wx.getImageInfo({
+      src: '/map.jpg',
       success: (res) => {
-        console.log(res)
+        const imageWidth = res.width;
+        const imageHeight = res.height;
+        const viewportWidth = this.data.viewportWidth;
+        const viewportHeight = this.data.viewportHeight;
+        
+        // 计算初始缩放比例，使图片充满整个屏幕
+        // 取宽度和高度缩放比例中的较大值，确保图片覆盖整个屏幕
+        const scaleX = viewportWidth / imageWidth;
+        const scaleY = viewportHeight / imageHeight;
+        const initialScale = Math.max(scaleX, scaleY);
+        
+        // 保存初始缩放比例，用于最小缩放限制
+        this._initialScale = initialScale;
+        
         this.setData({
-          userInfo: res.userInfo,
-          hasUserInfo: true
-        })
+          imageWidth: imageWidth,
+          imageHeight: imageHeight,
+          initialScale: initialScale, // 保存到data中，用于wxml
+        }, () => {
+          // 图片尺寸设置完成后，初始化movable-view的位置
+          this.initMapView(initialScale);
+        });
+      },
+      fail: (err) => {
+        console.error('加载图片失败:', err);
+        // 如果获取图片信息失败，使用默认尺寸
+        const imageWidth = 1200;
+        const imageHeight = 734;
+        const viewportWidth = this.data.viewportWidth;
+        const viewportHeight = this.data.viewportHeight;
+        const scaleX = viewportWidth / imageWidth;
+        const scaleY = viewportHeight / imageHeight;
+        const initialScale = Math.max(scaleX, scaleY);
+        
+        // 保存初始缩放比例
+        this._initialScale = initialScale;
+        
+        this.setData({
+          imageWidth: imageWidth,
+          imageHeight: imageHeight,
+          initialScale: initialScale,
+        }, () => {
+          this.initMapView(initialScale);
+        });
+        
+        wx.showToast({
+          title: '地图加载中',
+          icon: 'loading',
+          duration: 2000
+        });
       }
-    })
+    });
   },
+
+  // 初始化movable-view的位置
+  initMapView(initialScale) {
+    const mapView = this.selectComponent('#mapView');
+    if (mapView) {
+      const { viewportWidth, viewportHeight, imageWidth, imageHeight } = this.data;
+      const scaledWidth = imageWidth * initialScale;
+      const scaledHeight = imageHeight * initialScale;
+      
+      // 计算位置，使图片覆盖整个屏幕
+      // 图片的中心与屏幕中心对齐
+      let initialX = (viewportWidth - scaledWidth) / 2;
+      let initialY = (viewportHeight - scaledHeight) / 2;
+      
+      // 确保图片完全覆盖屏幕
+      // 如果图片在某个方向上比屏幕小，调整位置使其居中
+      if (scaledWidth < viewportWidth) {
+        initialX = (viewportWidth - scaledWidth) / 2;
+      }
+      if (scaledHeight < viewportHeight) {
+        initialY = (viewportHeight - scaledHeight) / 2;
+      }
+      
+      // 直接设置movable-view的属性
+      mapView.setData({
+        x: initialX,
+        y: initialY,
+        scale: initialScale
+      });
+      
+      // 保存当前状态
+      this._currentX = initialX;
+      this._currentY = initialY;
+      this._currentScale = initialScale;
+    }
+  },
+
+  // movable-view变化事件
+  onViewChange(e) {
+    const detail = e.detail;
+    const { viewportWidth, viewportHeight, imageWidth, imageHeight } = this.data;
+    
+    // 获取当前缩放比例，如果没有变化则使用之前的
+    const currentScale = detail.scale !== undefined ? detail.scale : this._currentScale;
+    
+    // 计算边界限制
+    const scaledWidth = imageWidth * currentScale;
+    const scaledHeight = imageHeight * currentScale;
+    
+    // 计算允许的最大和最小位置
+    // 确保图片始终覆盖整个屏幕
+    let minX = viewportWidth - scaledWidth;
+    let maxX = 0;
+    let minY = viewportHeight - scaledHeight;
+    let maxY = 0;
+    
+    // 如果图片在某个方向上比屏幕小，调整边界使其居中
+    if (scaledWidth < viewportWidth) {
+      minX = (viewportWidth - scaledWidth) / 2;
+      maxX = minX;
+    }
+    if (scaledHeight < viewportHeight) {
+      minY = (viewportHeight - scaledHeight) / 2;
+      maxY = minY;
+    }
+    
+    // 限制x和y在边界内
+    let clampedX = Math.max(minX, Math.min(maxX, detail.x));
+    let clampedY = Math.max(minY, Math.min(maxY, detail.y));
+    
+    // 如果位置被限制，需要更新movable-view的位置
+    if (clampedX !== detail.x || clampedY !== detail.y) {
+      const mapView = this.selectComponent('#mapView');
+      if (mapView) {
+        mapView.setData({
+          x: clampedX,
+          y: clampedY
+        });
+      }
+    }
+    
+    // 保存当前状态
+    this._currentX = clampedX !== detail.x ? clampedX : detail.x;
+    this._currentY = clampedY !== detail.y ? clampedY : detail.y;
+    this._currentScale = currentScale;
+  },
+
+  // Marker点击事件
+  onMarkerTap(e) {
+    const markerId = e.currentTarget.dataset.id;
+    const marker = this.data.markers.find(m => m.id === markerId);
+    
+    if (marker) {
+      wx.showModal({
+        title: 'Marker信息',
+        content: `坐标: (${marker.x}, ${marker.y})`,
+        showCancel: false
+      });
+    }
+  },
+
+  // 重置视图到初始状态
+  resetView() {
+    const { viewportWidth, viewportHeight, imageWidth, imageHeight } = this.data;
+    
+    if (imageWidth && imageHeight) {
+      const scaleX = viewportWidth / imageWidth;
+      const scaleY = viewportHeight / imageHeight;
+      const initialScale = Math.max(scaleX, scaleY);
+      
+      // 计算缩放后的尺寸
+      const scaledWidth = imageWidth * initialScale;
+      const scaledHeight = imageHeight * initialScale;
+      
+      // 计算位置，使图片覆盖整个屏幕
+      // 图片的中心与屏幕中心对齐
+      let initialX = (viewportWidth - scaledWidth) / 2;
+      let initialY = (viewportHeight - scaledHeight) / 2;
+      
+      // 确保图片完全覆盖屏幕
+      if (scaledWidth < viewportWidth) {
+        initialX = (viewportWidth - scaledWidth) / 2;
+      }
+      if (scaledHeight < viewportHeight) {
+        initialY = (viewportHeight - scaledHeight) / 2;
+      }
+      
+      // 直接操作movable-view组件
+      const mapView = this.selectComponent('#mapView');
+      if (mapView) {
+        mapView.setData({
+          x: initialX,
+          y: initialY,
+          scale: initialScale
+        });
+      }
+      
+      // 更新当前状态
+      this._currentX = initialX;
+      this._currentY = initialY;
+      this._currentScale = initialScale;
+    }
+  }
 })

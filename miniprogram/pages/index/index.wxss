@@ -1,62 +1,83 @@
-/**index.wxss**/
 page {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-.scrollarea {
-  flex: 1;
-  overflow-y: hidden;
-}
-
-.userinfo {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  color: #aaa;
-  width: 80%;
-}
-
-.userinfo-avatar {
-  overflow: hidden;
-  width: 128rpx;
-  height: 128rpx;
-  margin: 20rpx;
-  border-radius: 50%;
-}
-
-.usermotto {
-  margin-top: 200px;
-}
-
-.avatar-wrapper {
-  padding: 0;
-  width: 56px !important;
-  border-radius: 8px;
-  margin-top: 40px;
-  margin-bottom: 40px;
-}
-
-.avatar {
-  display: block;
-  width: 56px;
-  height: 56px;
-}
-
-.nickname-wrapper {
-  display: flex;
+  height: 100%;
   width: 100%;
-  padding: 16px;
-  box-sizing: border-box;
-  border-top: .5px solid rgba(0, 0, 0, 0.1);
-  border-bottom: .5px solid rgba(0, 0, 0, 0.1);
-  color: black;
+  position: relative;
 }
 
-.nickname-label {
-  width: 105px;
+.container {
+  background-color: aqua;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
 }
 
-.nickname-input {
-  flex: 1;
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  font-size: 16px;
+  color: #666;
+}
+
+.movable-area {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.movable-test {
+  background-color: aqua;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.movable-view {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+.map-image {
+  /* 确保地图图片正确显示 */
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.marker {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  transform: translate(-50%, -100%); /* 让Marker的坐标点位于底部中心 */
+  z-index: 10;
+}
+
+.marker-icon {
+  width: 100%;
+  height: 100%;
+  background-color: red;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+.reset-btn {
+  position: absolute;
+  bottom: 30px;
+  right: 20px;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 14px;
+  z-index: 100;
 }

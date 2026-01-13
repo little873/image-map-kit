@@ -1,27 +1,42 @@
-<!--index.wxml-->
-<scroll-view class="scrollarea" scroll-y type="list">
-  <view class="container">
-    <view class="userinfo">
-      <block wx:if="{{canIUseNicknameComp && !hasUserInfo}}">
-        <button class="avatar-wrapper" open-type="chooseAvatar" bind:chooseavatar="onChooseAvatar">
-          <image class="avatar" src="{{userInfo.avatarUrl}}"></image>
-        </button>
-        <view class="nickname-wrapper">
-          <text class="nickname-label">昵称</text>
-          <input type="nickname" class="nickname-input" placeholder="请输入昵称" bind:change="onInputChange" />
-        </view>
-      </block>
-      <block wx:elif="{{!hasUserInfo}}">
-        <button wx:if="{{canIUseGetUserProfile}}" bindtap="getUserProfile"> 获取头像昵称 </button>
-        <view wx:else> 请使用2.10.4及以上版本基础库 </view>
-      </block>
-      <block wx:else>
-        <image bindtap="bindViewTap" class="userinfo-avatar" src="{{userInfo.avatarUrl}}" mode="cover"></image>
-        <text class="userinfo-nickname">{{userInfo.nickName}}</text>
-      </block>
-    </view>
-    <view class="usermotto">
-      <text class="user-motto">{{motto}}</text>
-    </view>
+<view class="container">
+  <!-- 加载状态 -->
+  <view wx:if="{{!imageWidth || !imageHeight}}" class="loading">
+    地图加载中...
   </view>
-</scroll-view>
+  
+  <movable-area 
+    wx:else
+    class="movable-area"
+  >
+    <movable-view 
+      id="mapView"
+      class="movable-view"
+      direction="all"
+      scale="true"
+      scale-min="{{initialScale || 1}}"
+      scale-max="3"
+      bindchange="onViewChange"
+      style="width: {{imageWidth}}px; height: {{imageHeight}}px;"
+      inertia="true"
+    >
+      <!-- 使用本地图片 -->
+      <image src="/map.jpg" class="map-image" style="width: {{imageWidth}}px; height: {{imageHeight}}px;"></image>
+      <!-- Markers -->
+      <view 
+        wx:for="{{markers}}" 
+        wx:key="id" 
+        class="marker"
+        style="left: {{item.x}}px; top: {{item.y}}px;"
+        bindtap="onMarkerTap"
+        data-id="{{item.id}}"
+      >
+        <view class="marker-icon"></view>
+      </view>
+    </movable-view>
+  </movable-area>
+  
+  <!-- 重置按钮 -->
+  <view class="reset-btn" bindtap="resetView">
+    重置视图
+  </view>
+</view>

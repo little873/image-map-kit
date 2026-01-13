@@ -25,12 +25,17 @@
       <view 
         wx:for="{{markers}}" 
         wx:key="id" 
-        class="marker"
+        class="marker {{item.type === 'image' ? 'image-marker' : ''}}"
         style="left: {{item.x}}px; top: {{item.y}}px;"
         bindtap="onMarkerTap"
         data-id="{{item.id}}"
       >
-        <view class="marker-icon"></view>
+        <block wx:if="{{item.type === 'image'}}">
+          <image src="{{item.image}}" class="marker-image"></image>
+        </block>
+        <block wx:else>
+          <view class="marker-icon"></view>
+        </block>
       </view>
     </movable-view>
   </movable-area>
@@ -38,5 +43,49 @@
   <!-- 重置按钮 -->
   <view class="reset-btn" bindtap="resetView">
     重置视图
+  </view>
+  
+  <!-- 底部弹窗 -->
+  <view wx:if="{{showPopup}}" class="popup-overlay" bindtap="closePopup">
+    <view class="popup-container" catchtap="stopPropagation">
+      <!-- 弹窗内容 -->
+      <view class="popup-header">
+        <text class="popup-title">{{popupTitle}}</text>
+        <view class="popup-close" bindtap="closePopup">
+          <text class="close-icon">×</text>
+        </view>
+      </view>
+      <view class="popup-content">
+        <image src="{{popupImage}}" class="popup-image" mode="aspectFill"></image>
+        <view class="popup-description">{{popupDescription}}</view>
+        <view wx:if="{{popupVideoUrl}}" class="popup-video-section">
+          <button class="video-btn" bindtap="watchVideo">点击观看视频</button>
+        </view>
+      </view>
+    </view>
+  </view>
+  
+  <!-- 视频播放器 -->
+  <view wx:if="{{showVideoPlayer}}" class="video-player-overlay" bindtap="closeVideoPlayer">
+    <view class="video-player-container" catchtap="stopPropagation">
+      <view class="video-player-header">
+        <text class="video-player-title">视频播放</text>
+        <view class="video-player-close" bindtap="closeVideoPlayer">
+          <text class="close-icon">×</text>
+        </view>
+      </view>
+      <video 
+        id="popupVideo" 
+        src="{{currentVideoUrl}}" 
+        controls 
+        autoplay 
+        class="video-player"
+        show-center-play-btn="{{true}}"
+        show-fullscreen-btn="{{true}}"
+        show-play-btn="{{true}}"
+        enable-play-gesture="{{true}}"
+        object-fit="contain"
+      ></video>
+    </view>
   </view>
 </view>

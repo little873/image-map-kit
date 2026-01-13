@@ -10,9 +10,47 @@ Page({
     imageHeight: 0,
     // Marker数据
     markers: [
-      { id: 'marker-1', x: 320, y: 580 },
-      { id: 'marker-2', x: 450, y: 320 }
-    ]
+      // 图片标记点
+      { 
+        id: 'pic-1', 
+        x: 200, 
+        y: 400, 
+        type: 'image', 
+        image: '../../image/1.jpeg',
+        title: '位置一',
+        description: '这是第一个标记点的详细描述信息，可以包含更多内容。',
+        videoUrl: 'https://cos-power-app-offline-1251840830.cos.ap-beijing.myqcloud.com/temp/source/1.mp4'
+      },
+      { 
+        id: 'pic-2', 
+        x: 500, 
+        y: 300, 
+        type: 'image', 
+        image: '../../image/2.jpeg',
+        title: '位置二',
+        description: '第二个标记点的描述，这里可以写一些相关的说明文字。',
+        videoUrl: 'https://cos-power-app-offline-1251840830.cos.ap-beijing.myqcloud.com/temp/source/2.mp4'
+      },
+      { 
+        id: 'pic-3', 
+        x: 350, 
+        y: 600, 
+        type: 'image', 
+        image: '../../image/3.jpeg',
+        title: '位置三',
+        description: '第三个标记点的详细信息，描述内容可以根据需要调整。',
+        videoUrl: 'https://cos-power-app-offline-1251840830.cos.ap-beijing.myqcloud.com/temp/source/3.mp4'
+      }
+    ],
+    // 弹窗状态
+    showPopup: false,
+    popupTitle: '',
+    popupImage: '',
+    popupDescription: '',
+    popupVideoUrl: '',
+    // 视频播放器状态
+    showVideoPlayer: false,
+    currentVideoUrl: ''
   },
 
   onLoad() {
@@ -183,12 +221,66 @@ Page({
     const marker = this.data.markers.find(m => m.id === markerId);
     
     if (marker) {
-      wx.showModal({
-        title: 'Marker信息',
-        content: `坐标: (${marker.x}, ${marker.y})`,
-        showCancel: false
+      this.setData({
+        showPopup: true,
+        popupTitle: marker.title || '标记点',
+        popupImage: marker.image,
+        popupDescription: marker.description || `坐标: (${marker.x}, ${marker.y})`,
+        popupVideoUrl: marker.videoUrl || ''
       });
     }
+  },
+
+  // 观看视频
+  watchVideo() {
+    const videoUrl = this.data.popupVideoUrl;
+    if (!videoUrl) {
+      wx.showToast({
+        title: '视频地址无效',
+        icon: 'none'
+      });
+      return;
+    }
+    
+    // 显示视频播放器
+    this.setData({
+      showVideoPlayer: true,
+      currentVideoUrl: videoUrl
+    });
+    
+    // 创建视频上下文并播放
+    setTimeout(() => {
+      const videoContext = wx.createVideoContext('popupVideo', this);
+      if (videoContext) {
+        videoContext.play();
+      }
+    }, 100);
+  },
+
+  // 关闭弹窗
+  closePopup() {
+    this.setData({
+      showPopup: false,
+      showVideoPlayer: false
+    });
+  },
+
+  // 关闭视频播放器
+  closeVideoPlayer() {
+    // 停止视频播放
+    const videoContext = wx.createVideoContext('popupVideo', this);
+    if (videoContext) {
+      videoContext.stop();
+    }
+    this.setData({
+      showVideoPlayer: false
+    });
+  },
+
+  // 阻止事件冒泡
+  stopPropagation() {
+    // 这个方法什么都不做，只是阻止事件冒泡
+    return;
   },
 
   // 重置视图到初始状态

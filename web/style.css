@@ -1,0 +1,32 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  touch-action: none; /* 禁止浏览器默认触摸行为 */
+}
+
+#viewport {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #f5f5f5;
+}
+
+#map-container {
+  position: absolute;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+#map-image {
+  display: block;
+  width: auto;
+  height: auto;
+  /* 初始尺寸由 JS 设置 */
+}
